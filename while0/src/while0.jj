@@ -1,0 +1,86 @@
+/**
+ * JavaCC template file created by SF JavaCC plugin 1.5.17+ wizard for JavaCC 1.5.0+
+ */
+options
+{
+  JDK_VERSION = "1.5";
+  static = true;
+}
+
+PARSER_BEGIN(WHILE0)
+
+public class WHILE0
+{
+  public static void main(String args []) throws ParseException
+  {
+	WHILE0 parser = new WHILE0(System.in);
+    
+  	System.out.println("Reading from standard input...");
+  	System.out.println("Enter an WHILE0-Program:");
+  	try
+  	{
+	    WHILE0.while0();
+	    System.out.println("Program is OK :)");
+  	}
+  	catch (Exception e)
+  	{
+	    System.out.println("NOK.");
+	    System.out.println(e.getMessage());
+	    WHILE0.ReInit(System.in);
+  	}
+  	catch (Error e)
+  	{
+	    System.out.println("Oops.");
+	    System.out.println(e.getMessage());
+	}
+  }
+}
+
+PARSER_END(WHILE0)
+
+SKIP :
+{
+  " "
+| "\r"
+| "\t"
+| "\n"
+}
+
+TOKEN :
+{
+	< L_WHILE: "while">
+| 	< L_IN : "in" >
+| 	< L_OUT : "out" >
+| 	< L_VAR : "var" >
+|	< L_DO : "do" >
+| 	< L_BEGIN : "begin" >
+| 	< L_END : "end" >
+|	< VAR : (["a"-"z","A"-"Z"])(["a"-"z","A"-"Z","0"-"9"])* >
+}
+
+void while0() :
+{}
+{
+  < VAR > "(" < L_IN > < VAR > ( "," < VAR > )*  ";" < L_OUT > < VAR > ")" ";"		//MULTN ( in X1, X2; out Y );
+  < L_VAR > "(" ( < VAR > ( "," < VAR > )* )? ")" ";"								//var( H1 );
+
+  sequenz()
+
+  < EOF >
+}
+
+void anweisung() :
+{}
+{
+  < VAR > "=" (( < VAR > "+" "1" )| "0" )											//Zuweisung
+| < L_WHILE > < VAR > "!=" < VAR > < L_DO > < L_BEGIN > sequenz() < L_END >			//While-Schleife
+}
+
+void sequenz() :																	//Sequenz
+{}
+{
+  anweisung()
+  (
+    ";" anweisung()
+  )*
+}
