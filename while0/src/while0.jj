@@ -8,19 +8,29 @@ options
 }
 
 PARSER_BEGIN(WHILE0)
+import java.util.HashMap;
+
 
 public class WHILE0
 {
+  public static HashMap<String, Integer> vars = new HashMap<String, Integer >();
+  public static Integer nextFreeRegister = 1;
+  public static Integer nextFreeLabel = 1;
+  
   public static void main(String args []) throws ParseException
   {
 	WHILE0 parser = new WHILE0(System.in);
-    
+	/*whileProgramm = "bla(in a, b; out y); \n"
+					+ "var();"
+					+ "a = 0";
+    WHILE0 parser = new WHILE0(whileProgramm);
+    */
   	System.out.println("Reading from standard input...");
   	System.out.println("Enter an WHILE0-Program:");
   	try
   	{
-	    WHILE0.while0();
-	    System.out.println("Program is OK :)");
+	    String urm = WHILE0.while0();
+	    System.out.println(urm);
   	}
   	catch (Exception e)
   	{
@@ -58,29 +68,169 @@ TOKEN :
 |	< VAR : (["a"-"z","A"-"Z"])(["a"-"z","A"-"Z","0"-"9"])* >
 }
 
-void while0() :
-{}
+String while0() :
+{String sequenz = ""; String inVars = ""; String outVar = "";}
 {
-  < VAR > "(" < L_IN > < VAR > ( "," < VAR > )*  ";" < L_OUT > < VAR > ")" ";"		//MULTN ( in X1, X2; out Y );
-  < L_VAR > "(" ( < VAR > ( "," < VAR > )* )? ")" ";"								//var( H1 );
+ 	< VAR > "(" inVars = inVars()  ";" outVar = outVar() ")" ";"	//MULTN ( in X1, X2; out Y );
+  	< L_VAR > "(" hilfsVars() ")" ";"								//var( H1 );
 
-  sequenz()
+  	sequenz = sequenz()
 
-  < EOF >
+  	< EOF >
+
+  	{    	return inVars + sequenz + "\n" + outVar + "\n";
+  	}
 }
 
-void anweisung() :
-{}
-{
-  < VAR > "=" (( < VAR > "+" "1" )| "0" )											//Zuweisung
-| < L_WHILE > < VAR > "!=" < VAR > < L_DO > < L_BEGIN > sequenz() < L_END >			//While-Schleife
+String inVars() :										//In Variablen einlesen
+{String s = "in(";}										//Beziehung von Variablen zu Registernummern zur Hashmap hinzufügen
+{														//Register Nummern von in Variablen speichern
+	< L_IN >
+	< VAR >
+	{
+	  	s += "R" + nextFreeRegister;
+    	vars.put(token.image, nextFreeRegister++);
+  	}
+  	(
+    	"," < VAR >
+		{
+  			if (vars.containsKey(token.image))  			{
+    			throw new ParseException("Variablen name mehrmals vergeben");      		}
+      		s += ", R" + nextFreeRegister;
+      		vars.put(token.image, nextFreeRegister++);
+  		}
+  	)*
+  	{		return s + ")\n";
+  	}
 }
 
-void sequenz() :																	//Sequenz
-{}
+String outVar() :											//Out Variable einlesen
+{String s = "out(";}									//Beziehung von Variablen zu Registernummern zur Hashmap hinzufügen
+{														//Register Nummer von out Variable speichern
+  < L_OUT >
+  < VAR >
+  {
+    if (vars.containsKey(token.image))
+  	{
+      throw new ParseException("Variablen name mehrmals vergeben");
+  	}
+  	s += "R" + nextFreeRegister;
+    vars.put(token.image, nextFreeRegister++);
+
+    return s + ")\n";
+  }
+}
+
+void hilfsVars() :										//Hilfsvariablen einlesen
+{}														//Beziehung von Variablen zu Registernummern zur Hashmap hinzufügen
 {
-  anweisung()
-  (
-    ";" anweisung()
-  )*
+	(
+		< VAR >
+		{
+			if (vars.containsKey(token.image))
+			{
+				throw new ParseException("Variablen name mehrmals vergeben");
+      		}
+      		vars.put(token.image, nextFreeRegister++);
+  		}
+    	( ","
+      		< VAR >
+      		{
+	      		if (vars.containsKey(token.image))
+	      		{
+	        		throw new ParseException("Variablen name mehrmals vergeben");
+	      		}
+	      		vars.put(token.image, nextFreeRegister++);
+  	  		}
+    	)*
+  	)?
+}
+
+String anweisung() :
+{String s = "";}
+{
+	(
+  		(  			s = zuweisung()
+  		)
+	|
+		(		  	s = whileSchleife()
+		 )
+	)
+	{
+	  return s;	}
+}
+
+
+String zuweisung() :
+{Integer var1 = 0; Integer var2 = 0; Integer label1 = 0; Integer label2 = 0; String s = "";}
+{
+  	< VAR >
+    {
+ 	 	var1 = vars.get(token.image);
+ 	}
+ 	"="
+ 	(		(
+	   		< VAR >
+		 	{
+		 	  var2 = vars.get(token.image);
+		 	}
+		 	"+" "1"
+		 	{
+			  if(var1 == var2)			  {
+			    s += "R" + var1 + "++;";			  }
+			  else			  {
+			    s += "R" + var1 + " = 0;\n";
+			    label1 = nextFreeLabel++;
+			    label2 = nextFreeLabel++;
+			    s += "LABEL" + label1 + " if " + "R" + var1 + " == " + "R" + var2 + " goto LABEL" + label2 + "\n";
+			    s += "R" + var1 + "++;\n";
+			    s += "goto LABEL" + label1 + "\n";
+			    s += "LABEL" + label2 + " R" + var1 + "++;\n";			  }		 	}
+		)
+	|  	(
+	 	   	"0"
+	 	   	{
+	 	     	s += "R" + var1 + " = 0;\n";
+	 	   	}
+	  	)
+	 )
+	{
+		return s;
+	}}
+
+String whileSchleife() :
+{Integer var1 = 0; Integer var2 = 0; Integer label1 = 0; Integer label2 = 0; String s = ""; String neu = "";}
+{	< L_WHILE >
+	< VAR >
+	{		var1 = vars.get(token.image);
+	}
+	"!="
+	< VAR >
+	{
+		var2 = vars.get(token.image);
+		label1 = nextFreeLabel++;
+		label2 = nextFreeLabel++;
+
+		s += "LABLE" + label1 + " if R" + var1 + " == R" + var2 + " goto LABLE" + label2 + "\n";
+	}
+	< L_DO > < L_BEGIN > neu = sequenz() < L_END >
+	{
+	  	s += neu;
+	  	s += "goto LABLE" + label1 + "\n";
+	  	s += "LABLE" + label2 + " ";
+	  	return s;	}
+}
+
+String sequenz() :																	//Sequenz
+{String s = "";String neueAnweisung = "";}
+{
+  	s = anweisung()
+  	(
+    	";"
+    	neueAnweisung = anweisung()
+    	{			s += neueAnweisung;
+    	}
+  	)*
+  	{		return s;
+  	}
 }
