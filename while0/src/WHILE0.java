@@ -53,6 +53,7 @@ public class WHILE0 implements WHILE0Constants {
     
             sequenz = sequenz();
     jj_consume_token(0);
+                sequenz = Helper.transformiereLabel(sequenz);
         {if (true) return inVars + sequenz + "\u005cn" + outVar + "\u005cn";}
     throw new Error("Missing return statement in function");
   }
@@ -173,9 +174,9 @@ public class WHILE0 implements WHILE0Constants {
                             s += "R" + var1 + " = 0;\u005cn";
                             label1 = nextFreeLabel++;
                             label2 = nextFreeLabel++;
-                            s += "LABEL" + label1 + " if " + "R" + var1 + " == " + "R" + var2 + " goto LABEL" + label2 + "\u005cn";
+                            s += "LABEL" + label1 + " if " + "R" + var1 + " == " + "R" + var2 + " goto LABEL" + label2 + ";\u005cn";
                             s += "R" + var1 + "++;\u005cn";
-                            s += "goto LABEL" + label1 + "\u005cn";
+                            s += "goto LABEL" + label1 + ";\u005cn";
                             s += "LABEL" + label2 + " R" + var1 + "++;\u005cn";
                           }
       break;
@@ -203,14 +204,14 @@ public class WHILE0 implements WHILE0Constants {
                 label1 = nextFreeLabel++;
                 label2 = nextFreeLabel++;
 
-                s += "LABLE" + label1 + " if R" + var1 + " == R" + var2 + " goto LABLE" + label2 + "\u005cn";
+                s += "LABEL" + label1 + " if R" + var1 + " == R" + var2 + " goto LABEL" + label2 + ";\u005cn";
     jj_consume_token(L_DO);
     jj_consume_token(L_BEGIN);
     neu = sequenz();
     jj_consume_token(L_END);
                 s += neu;
-                s += "goto LABLE" + label1 + "\u005cn";
-                s += "LABLE" + label2 + " ";
+                s += "goto LABEL" + label1 + ";\u005cn";
+                s += "LABEL" + label2 + " ";
                 {if (true) return s;}
     throw new Error("Missing return statement in function");
   }

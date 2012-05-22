@@ -78,7 +78,8 @@ String while0() :
 
   	< EOF >
 
-  	{    	return inVars + sequenz + "\n" + outVar + "\n";
+  	{
+  	  	sequenz = Helper.transformiereLabel(sequenz);    	return inVars + sequenz + "\n" + outVar + "\n";
   	}
 }
 
@@ -182,9 +183,9 @@ String zuweisung() :
 			    s += "R" + var1 + " = 0;\n";
 			    label1 = nextFreeLabel++;
 			    label2 = nextFreeLabel++;
-			    s += "LABEL" + label1 + " if " + "R" + var1 + " == " + "R" + var2 + " goto LABEL" + label2 + "\n";
+			    s += "LABEL" + label1 + " if " + "R" + var1 + " == " + "R" + var2 + " goto LABEL" + label2 + ";\n";
 			    s += "R" + var1 + "++;\n";
-			    s += "goto LABEL" + label1 + "\n";
+			    s += "goto LABEL" + label1 + ";\n";
 			    s += "LABEL" + label2 + " R" + var1 + "++;\n";			  }		 	}
 		)
 	|  	(
@@ -211,13 +212,13 @@ String whileSchleife() :
 		label1 = nextFreeLabel++;
 		label2 = nextFreeLabel++;
 
-		s += "LABLE" + label1 + " if R" + var1 + " == R" + var2 + " goto LABLE" + label2 + "\n";
+		s += "LABEL" + label1 + " if R" + var1 + " == R" + var2 + " goto LABEL" + label2 + ";\n";
 	}
 	< L_DO > < L_BEGIN > neu = sequenz() < L_END >
 	{
 	  	s += neu;
-	  	s += "goto LABLE" + label1 + "\n";
-	  	s += "LABLE" + label2 + " ";
+	  	s += "goto LABEL" + label1 + ";\n";
+	  	s += "LABEL" + label2 + " ";
 	  	return s;	}
 }
 
